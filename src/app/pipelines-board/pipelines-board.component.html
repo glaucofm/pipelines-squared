@@ -1,0 +1,155 @@
+<div class="main">
+
+    <ng-container *ngFor="let pipeline of builder.pipelines">
+        <div class="pipeline" [style.height]="(pipeline.height + 35 + 20) + 'px'" [style.width]="(pipelinesMaxWidth + 40) + 'px'">
+            <div class="pipeline-title">
+                {{ pipeline.name }}
+            </div>
+            <div class="pipeline-title-filler" [style.width]="(pipeline.width - 200) + 'px'"></div>
+            <div class="pipeline-body" style="padding: 0px 20px 20px 20px">
+                <ng-container *ngFor="let slice of pipeline.slices">
+                    <div class="block">
+                        <div class="block-space">&nbsp;</div>
+                        <ng-container *ngFor="let job of slice.jobs">
+                            <button *ngIf="canBuild(job)" class="pure-button job-action build"
+                                    (click)="buildJob(job)" [class.active]="job.isHoveringAction" [class.pending]="job.isWaitingBuild" [style.top]="(job.y * 130 + 9) + 'px'">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button *ngIf="canStop(job)" class="pure-button job-action stop"
+                                    (click)="stopJob(job)" [class.active]="job.isHoveringAction" [class.pending]="job.isWaitingToStop" [style.top]="(job.y * 130 - 12) + 'px'">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                            <div class="job" [style.top] = "(job.y * 130) + 'px'">
+                                <div class="text">{{ job.text }}</div>
+                                <div [ngClass]="{'line': !!job.parent, 'line-empty': !job.parent }" class="{{ job.statusLeft }}"></div>
+                                <div class="circle {{ job.status }}" (click)="selectJob(pipeline, job)"
+                                     (mouseenter)="mouseEnterJob(job, 'circle')" (mouseleave)="mouseLeaveJob(job, 'circle')"></div>
+                                <div [ngClass]="{'line': job.next.length > 0, 'line-empty': job.next.length == 0 }" class="{{ job.statusRight }}"></div>
+                                <div class="title {{ job.status }} {{ job.isHoveringDetail? 'active' : '' }}">{{ job.name }}</div>
+                            </div>
+                        </ng-container>
+                    </div>
+                    <ng-container *ngIf="slice.connectors && slice.connectors.length > 0">
+                        <div class="block">
+                            <div class="connector-space">&nbsp;</div>
+                            <ng-container *ngFor="let connector of slice.connectors">
+                                <ng-container *ngIf="connector.direction == 'up'">
+                                    <div class="connector {{ connector.status }}" [style.top]="(connector.top) + 'px'">
+                                        <div class="line-up-right" [style.height]="(connector.lineUpRightHeight) + 'px'"></div>
+                                        <div class="line-up"       [style.height]="(connector.lineUpHeight)      + 'px'"></div>
+                                        <div class="line-right-up" [style.height]="(connector.lineRightUpHeight) + 'px'"></div>
+                                    </div>
+                                </ng-container>
+                                <ng-container *ngIf="connector.direction == 'right'">
+                                    <div class="connector  {{ connector.status }}" [style.top] = "(connector.top) + 'px'">
+                                        <div class="line single-line"></div>
+                                    </div>
+                                </ng-container>
+                                <ng-container *ngIf="connector.direction == 'down'">
+                                    <div class="connector  {{ connector.status }}" [style.top]="(connector.top) + 'px'">
+                                        <div class="line-right-down" [style.height]="(connector.lineRightDownHeight) + 'px'"></div>
+                                        <div class="line-up"         [style.height]="(connector.lineUpHeight)        + 'px'"></div>
+                                        <div class="line-down-right" [style.height]="(connector.lineDownRightHeight) + 'px'"></div>
+                                    </div>
+                                </ng-container>
+                            </ng-container>
+                        </div>
+                    </ng-container>
+                </ng-container>
+            </div>
+        </div>
+
+        <!-- *** job details *** -->
+
+        <ng-container *ngIf="selectedJobs[pipeline.name] && selectedJobs[pipeline.name].length">
+            <div class="job-details" [style.width]="pipelineDetailWidth[pipeline.id] + 'px'">
+                <ng-container *ngFor="let job of selectedJobs[pipeline.name]">
+                    <table class="stages {{ pipeline.id }} {{ job.isHoveringCircle? 'active' : '' }}"
+                           *ngVar="job.jobRuns[this.selectedJobRun[pipeline.id + job.name]] as jobRun"
+                           (mouseenter)="mouseEnterJob(job, 'detail-title')" (mouseleave)="mouseLeaveJob(job, 'detail-title')">
+
+                        <!-- *** job detail header *** -->
+                        <tr>
+                            <td colspan="2" class="stage-job-header">
+                                <div class="stage-job-title">
+                                    {{ job.name }}
+                                </div>
+                                <div class="stage-job-details">
+                                    <ng-container *ngIf="this.selectedJobRun[pipeline.id + job.name] < job.jobRuns.length - 1">
+                                        <i class="fas fa-chevron-left clickable" (click)="this.selectedJobRun[pipeline.id + job.name] = this.selectedJobRun[pipeline.id + job.name] + 1"></i>
+                                    </ng-container>
+                                    Build {{ jobRun.id }}
+                                    <img src="/assets/images/papyrus-18.png" class="clickable" style="margin-bottom: -2px" (click)="viewLog(job, jobRun)">
+                                    <ng-container *ngIf="this.selectedJobRun[pipeline.id + job.name] > 0">
+                                        <i class="fas fa-chevron-right clickable" (click)="this.selectedJobRun[pipeline.id + job.name] = this.selectedJobRun[pipeline.id + job.name] - 1"></i>
+                                    </ng-container>
+                                </div>
+                                <div class="stage-job-details">
+                                    {{ formatDate(jobRun.startTimeMillis) }}
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- *** job stages *** -->
+                        <ng-container *ngFor="let stage of jobRun.stages; let i = index; let first = first; let last = last">
+                            <tr>
+                                <td class="stage clickable" style="position: relative; width: 20px" (click)="stage.stageFlowNodes.length? openOrCloseStageNode(pipeline, job, stage) : ''">
+                                    <div class="stage-circle {{ stage.status }}" style="position: absolute; top: 3px"></div>
+                                </td>
+                                <td>
+                                    <div class="stage-name">{{ stage.name }}</div>
+                                    <div class="stage-details {{ stage.status == 'IN_PROGRESS'? stage.status : '' }}" style="margin-bottom: -4px">{{ formatDuration(stage.durationMillis) }}</div>
+                                </td>
+                            </tr>
+                            <ng-container *ngIf="!last && !isStageOpen(pipeline, job, stage)">
+                                <tr>
+                                    <td colspan="2" class="node-graphics clickable" (click)="stage.stageFlowNodes.length? openOrCloseStageNode(pipeline, job, stage) : ''" style="height: 30px">
+                                        <div class="stage-line-vertical {{ stage.status }}" style="top: -3px; height: 39px"></div>
+                                    </td>
+                                </tr>
+                            </ng-container>
+
+                            <!-- *** job stage flow node *** -->
+                            <ng-container *ngIf="isStageOpen(pipeline, job, stage)">
+                                <ng-container *ngFor="let node of stage.stageFlowNodes; let firstNode = first; let lastNode = last">
+                                    <ng-container *ngIf="firstNode">
+                                        <tr class="nodes"><td colspan="2" style="height: 10px"></td></tr>
+                                    </ng-container>
+                                    <tr class="nodes">
+                                        <td colspan="1" class="node-graphics clickable" (click)="openOrCloseStageNode(pipeline, job, stage)" style="height: 40px">
+                                            <div class="stage-line-vertical {{ node.status }}" style="top: -6px; height: 16px"></div>
+                                            <div class="stage-line-vertical {{ node.status }}" style="top: -11px; height: 32px"></div>
+                                            <div class="node-circle {{ node.status }}" style="top: 17px; left: 4px"></div>
+                                            <div class="stage-line-vertical {{ node.status }}" *ngIf="lastNode && !last" style="top: 26px; height: 28px"></div>
+                                        </td>
+                                        <td>
+                                            <div class="node-name" style="float: left">{{ getNodeText(node) }}</div>
+                                            <img src="/assets/images/papyrus-18.png" class="clickable" style="margin: 2px 0px 0px 4px" (click)="viewLog(job, jobRun, node)">
+                                        </td>
+                                    </tr>
+                                    <ng-container *ngIf="lastNode">
+                                        <tr class="nodes"><td colspan="2" style="height: 10px"></td></tr>
+                                    </ng-container>
+                                </ng-container>
+                            </ng-container>
+
+                        </ng-container>
+                    </table>
+                </ng-container>
+            </div>
+        </ng-container>
+
+        <div class="pipeline-space">
+        </div>
+    </ng-container>
+
+</div>
+
+<app-modal *ngIf="log" (closeModal)="log = null" [visible]="true" [width]="'1200px'" [top]="'10px'" [hasFooter]="false">
+    <div title>
+        {{ log.name }}
+    </div>
+    <div body>
+        <pre id="prelog" class="log" [style.height]="(getWindowHeight() - 90) + 'px'">{{ log.text }}</pre>
+    </div>
+</app-modal>

@@ -1,0 +1,124 @@
+<div [class.topbar]="true">
+
+    <div class="pure-menu pure-menu-horizontal">
+        <ul class="pure-menu-list">
+
+            <li class="pure-menu-item">
+                <div class="dropdown hover" id="menu-jenkins">
+                    <a class="pure-menu-link" (click)="manageJenkins()">
+                        <ng-container>
+                            <i class="fas fa-plug"></i> Jenkins
+                        </ng-container>
+                    </a>
+                </div>
+            </li>
+
+            <li class="pure-menu-item">
+                <div class="dropdown hover" id="menu-pipelines">
+                    <a class="pure-menu-link">
+                        <i class="fas fa-sitemap"></i> Pipelines
+                    </a>
+                    <div class="dropdown-content dropdown-connections">
+                        <table>
+                            <tr *ngFor="let pipeline of config.pipelines">
+                                <td>
+                                    <a (click)="togglePipeline(pipeline)">
+                                        {{ pipeline.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a (click)="editPipeline(pipeline)" class="edit"><i class="far fa-edit"></i></a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <a (click)="editPipeline()" class="add"><i class="fas fa-plus"></i> Configure new pipeline</a>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                </div>
+            </li>
+
+        </ul>
+    </div>
+
+</div>
+
+<app-modal *ngIf="jenkinses.length" [visible]="true" [width]="'1000px'">
+    <div title>
+        Jenkins Servers
+    </div>
+    <div body>
+        <form class="pure-form pure-form-stacked" (ngSubmit)="saveJenkins()">
+            <fieldset>
+                <table class="form">
+                    <ng-container *ngFor="let jenkins of jenkinses">
+                        <tr>
+                            <td style="width: 40%">
+                                <label>Jenkins server</label>
+                                <input type="text" class="pure-input-1" [(ngModel)]="jenkins.server" [ngModelOptions]="{standalone: true}" placeholder="http://myjenkins.mycompany.com:8082">
+                            </td>
+                            <td style="width: 20%">
+                                <label>Jenkins username</label>
+                                <input type="text" class="pure-input-1" [(ngModel)]="jenkins.username" [ngModelOptions]="{standalone: true}">
+                            </td>
+                            <td style="width: 40%">
+                                <label>Your security token</label>
+                                <input type="text" class="pure-input-1" [(ngModel)]="jenkins.token"  [ngModelOptions]="{standalone: true}">
+                            </td>
+                            <td style="width: 10px">
+                                <label> </label>
+                                <button type="submit" class="pure-button danger small" (click)="removeJenkins(jenkins)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </ng-container>
+                    <tr>
+                        <td>
+                            <button type="button" class="pure-button" (click)="newJenkins()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+    </div>
+    <div footer>
+        <button type="submit" class="pure-button" (click)="saveJenkins()" style="margin-right: 10px;">Save</button>
+        <button type="submit" class="pure-button normal" (click)="jenkinses = []">Cancel</button>
+    </div>
+</app-modal>
+
+
+<app-modal *ngIf="editingPipeline" [visible]="true" [width]="'900px'" (closeModal)="editingPipeline = undefined">
+    <div title>
+        {{ editingPipeline.name }} Pipeline
+    </div>
+    <div body>
+        <form class="pure-form pure-form-stacked" (ngSubmit)="savePipeline()">
+            <fieldset>
+                <label>Name</label>
+                <input type="text" class="pure-input-1" [(ngModel)]="editingPipeline.name" [ngModelOptions]="{standalone: true}">
+                <label>Configuration</label>
+                <div class="editor" style="border: 1px solid #CCC">
+                    <ngs-code-editor
+                        style="height: 500px"
+                        theme="vs"
+                        [options]="{ lineNumbers: false, fontSize: 14, formatOnType: true, folding: false }"
+                        [codeModel]="editingPipeline.editorModel"
+                        (valueChanged)="pipelineEdited($event)">
+                    </ngs-code-editor>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+    <div footer>
+        <button type="submit" class="pure-button" (click)="savePipeline()" style="margin-right: 10px;">Save</button>
+        <button type="submit" class="pure-button normal" (click)="editingPipeline = undefined">Cancel</button>
+    </div>
+</app-modal>

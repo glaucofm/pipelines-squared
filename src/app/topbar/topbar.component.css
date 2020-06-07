@@ -1,0 +1,315 @@
+div.topbar {
+    padding: 10px;
+}
+
+select {
+    padding: 5px 10px;
+    font-size: 14px;
+    border: 1px solid navy;
+    width: 250px;
+    border-radius: 3px;
+}
+
+.pure-menu.pure-menu-horizontal {
+    text-align: center;
+}
+
+.pure-menu-item {
+    margin: 0px 20px 0px 20px;
+}
+
+form button {
+    margin-top: 10px;
+}
+
+div.dropdown-content.connect-dropdown {
+    width: 600px;
+    padding: 20px;
+}
+
+.pure-form label {
+    margin: 0px;
+}
+
+.pure-form-stacked input {
+    margin-top: 0px;
+    margin-bottom: 10px;
+}
+
+a {
+    cursor: pointer;
+}
+
+.dropdown-content {
+    z-index: 100;
+}
+
+.dropdown-content span.item {
+    color: black;
+    padding: 6px 12px;
+    display: block;
+}
+
+.dark-theme .dropdown-content span.item {
+    color: #ccc;
+}
+
+div.dropdown-connections a.edit, div.dropdown-connections a.disconnect, div.dropdown-connections a.add {
+    background-color: transparent;
+    padding: 6px 10px;
+}
+
+div.dropdown-connections a.edit, div.dropdown-connections a.disconnect {
+    margin-left: 10px;
+}
+
+div.dropdown-connections a.edit:hover, div.dropdown-connections a.add:hover {
+    background-color: transparent;
+    color: blue;
+}
+
+.dark-theme div.dropdown-connections a.edit:hover, .dark-theme div.dropdown-connections a.add:hover {
+    background-color: transparent;
+    color: deepskyblue;
+}
+
+div.dropdown-connections a.disconnect:hover {
+    background-color: transparent;
+    color: red;
+}
+
+div.dropdown-connections a.connected {
+    color: blue;
+}
+
+.dark-theme div.dropdown-connections a.connected, .dark-theme div.dropdown-connections a.disconnected:hover {
+    color: deepskyblue;
+}
+
+div.dropdown-connections a.connected:hover {
+    background-color: transparent;
+}
+
+table.topic-list tr.selected a.topic-name {
+    color: blue;
+}
+
+table.topic-list tr.unselected a.topic-name:hover {
+    color: blue;
+}
+
+.dark-theme table.topic-list tr.selected a.topic-name {
+    color: deepskyblue;
+}
+
+.dark-theme table.topic-list tr.unselected a.topic-name:hover {
+    color: deepskyblue;
+}
+
+table.topic-list a.publish, table.topic-list a.toggle {
+    background-color: white;
+    color: gray;
+}
+
+table.topic-list a.publish:hover, table.topic-list a.toggle:hover {
+    background-color: white;
+    color: blue;
+}
+
+.dark-theme table.topic-list a.publish, .dark-theme table.topic-list a.toggle {
+    background-color: transparent;
+    color: #888;
+}
+
+.dark-theme table.topic-list a.publish:hover, .dark-theme table.topic-list a.toggle:hover {
+    background-color: transparent;
+    color: deepskyblue;
+}
+
+table.columns {
+    margin: 20px;
+}
+
+table.columns th {
+    padding-bottom: 10px;
+}
+
+table.columns td {
+    padding: 1px 0px;
+}
+
+table.columns input {
+    border: 1px solid lightgrey;
+    padding: 2px 6px;
+    margin-right: 20px;
+}
+
+table.columns td.col-name input {
+    min-width: 150px;
+    border-radius: 2px;
+}
+
+table.columns td.col-json input {
+    min-width: 300px;
+    border-radius: 2px;
+}
+
+table.columns td.col-buttons a {
+    padding: 0px 0px;
+    color: lightgrey;
+    margin-right: 10px;
+}
+
+.dark-theme table.columns td.col-buttons a {
+    color: #aaa;
+}
+
+table.columns td.col-buttons a.enable.disabled {
+    color: lightgrey;
+}
+
+table.columns td.col-buttons a.enable.enabled {
+    color: black;
+}
+
+.dark-theme table.columns td.col-buttons a.enable.disabled {
+    color: #aaa;
+}
+
+.dark-theme table.columns td.col-buttons a.enable.enabled {
+    color: #eee;
+}
+
+.dark-theme input, .dark-theme textarea {
+    background-color: #222;
+    color: #ccc;
+    border: 1px solid #888
+}
+
+table.columns td.col-buttons a:hover, table.columns td.col-buttons a.enable:hover {
+    background-color: #f8f8f8;
+    color: blue;
+}
+
+.dark-theme table.columns td.col-buttons a:hover, .dark-theme table.columns td.col-buttons a.enable:hover {
+    background-color: transparent;
+    color: deepskyblue;
+}
+
+table.columns td.col-buttons a.remove:hover {
+    color: red;
+}
+
+table.columns td.col-buttons a i {
+    font-size: 20px;
+}
+
+table.columns td.col-buttons div.first {
+    min-width: 23px;
+}
+
+table.columns td.col-buttons a.move-up {
+    margin-right: 5px;
+}
+
+table.columns tr.add-column a {
+    background-color: transparent;
+    padding: 2px 0px 0px 0px;
+    color: grey;
+}
+
+table.columns tr.add-column a:hover {
+    color: blue;
+}
+
+.dark-theme table.columns tr.add-column a {
+    color: #ddd;
+}
+
+.dark-theme table.columns tr.add-column a:hover {
+    color: deepskyblue;
+}
+
+textarea.publish {
+    width: 100%;
+    border: solid 1px gray;
+    border-radius: 2px;
+    font-family: Consolas, 'Courier New', monospace;
+}
+
+.menu-config .dropdown-content {
+    padding: 20px;
+    padding-top: 10px;
+}
+
+.menu-config .themes span, .dark-theme .menu-config .themes span {
+    color: inherit;
+}
+
+.menu-config .themes span:hover, .menu-config .themes span.selected {
+    color: blue;
+}
+
+.menu-config .themes span.unselected {
+    cursor: pointer;
+}
+
+.dark-theme .menu-config .themes span, .dark-theme .dark-theme .menu-config .themes span {
+    color: inherit;
+}
+
+.dark-theme .menu-config .themes span:hover, .dark-theme .menu-config .themes span.selected {
+    color: deepskyblue;
+}
+
+.menu-config .themes span.left {
+    margin-right: 10px;
+}
+
+.menu-config .themes .label {
+    margin-bottom: 5px;
+}
+
+.menu-config .row {
+    margin-top: 10px;
+}
+
+/* Modal ******************************** */
+
+.pure-button {
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+.pure-button.small {
+    padding: 4px 8px;
+}
+
+.pure-button:hover {
+    color: #FFF;
+    background-color: #4791db;
+}
+
+.pure-button.danger:hover {
+    background-color: #e57373;
+}
+
+.pure-button.normal:hover {
+    background-color: #888;
+}
+
+.pure-button-hover, .pure-button:focus, .pure-button:hover {
+     background-image: none;
+}
+
+table.form {
+    width: 100%;
+}
+
+table.form td~td {
+    padding-left: 20px;
+}
+
+.pure-menu-item td {
+    text-align: left;
+}
