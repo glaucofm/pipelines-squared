@@ -274,34 +274,6 @@ textarea.publish {
     margin-top: 10px;
 }
 
-/* Modal ******************************** */
-
-.pure-button {
-    padding: 6px 12px;
-    font-weight: 500;
-}
-
-.pure-button.small {
-    padding: 4px 8px;
-}
-
-.pure-button:hover {
-    color: #FFF;
-    background-color: #4791db;
-}
-
-.pure-button.danger:hover {
-    background-color: #e57373;
-}
-
-.pure-button.normal:hover {
-    background-color: #888;
-}
-
-.pure-button-hover, .pure-button:focus, .pure-button:hover {
-     background-image: none;
-}
-
 table.form {
     width: 100%;
 }

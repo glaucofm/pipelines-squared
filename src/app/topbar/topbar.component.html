@@ -100,7 +100,7 @@
         {{ editingPipeline.name }} Pipeline
     </div>
     <div body>
-        <form class="pure-form pure-form-stacked" (ngSubmit)="savePipeline()">
+        <form class="pure-form pure-form-stacked" (ngSubmit)="savePipeline(editingPipeline)">
             <fieldset>
                 <label>Name</label>
                 <input type="text" class="pure-input-1" [(ngModel)]="editingPipeline.name" [ngModelOptions]="{standalone: true}">
@@ -118,7 +118,10 @@
         </form>
     </div>
     <div footer>
-        <button type="submit" class="pure-button" (click)="savePipeline()" style="margin-right: 10px;">Save</button>
+        <button type="submit" class="pure-button" (click)="savePipeline(editingPipeline)" style="margin-right: 10px;">Save</button>
         <button type="submit" class="pure-button normal" (click)="editingPipeline = undefined">Cancel</button>
+        <button type="submit" class="pure-button danger" (click)="deletePipeline(editingPipeline)" style="float: right;">Delete</button>
     </div>
 </app-modal>
+
+

@@ -29,12 +29,15 @@ export interface JobDefinition {
     url: string;
     next?: string[];
     isDeploy?: boolean;
-    parameters?: {
-        [key: string]: {
-            value?: string | number;
-            options?: string[];
-        }
-    };
+    parameters?: JobParameter[];
+}
+
+export interface JobParameter {
+    name: string;
+    fixedValue?: boolean;
+    value?: string | number;
+    options?: string[];
+    selectedOption?: string;
 }
 
 export interface Slice {
@@ -43,9 +46,11 @@ export interface Slice {
 }
 
 export interface Job {
-    name: string;
-    url?: string;
-    next: Job[];
+    name: string,
+    url: string;
+    next?: Job[];
+    isDeploy?: boolean;
+    parameters?: JobParameter[];
     parent: Job;
     y: number;
     maxChildY: number;

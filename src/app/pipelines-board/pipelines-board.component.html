@@ -153,3 +153,35 @@
         <pre id="prelog" class="log" [style.height]="(getWindowHeight() - 90) + 'px'">{{ log.text }}</pre>
     </div>
 </app-modal>
+
+<app-modal *ngIf="!!jobToBuild" [visible]="true" [width]="'600px'" (closeModal)="jobToBuild = undefined">
+    <div title>
+        Run job {{ jobToBuild.job.name }}
+    </div>
+    <div body>
+        <form class="pure-form pure-form-stacked" (ngSubmit)="buildJob(jobToBuild.job, jobToBuild.parameters)">
+            <fieldset>
+                <ng-container *ngFor="let parameter of jobToBuild.parameters">
+                    <label>{{ parameter.name }}</label>
+                    <ng-container *ngIf="parameter.value && !parameter.options">
+                        <input type="text" class="pure-input-1" [(ngModel)]="parameter.value" [ngModelOptions]="{standalone: true}" [disabled]="parameter.fixedValue">
+                    </ng-container>
+                    <ng-container *ngIf="!parameter.value && parameter.options">
+                        <select [(ngModel)]="parameter.selectedOption" [ngModelOptions]="{standalone: true}">
+                            <ng-container *ngFor="let option of parameter.options">
+                                <option value="{{ option }}">{{ option }}</option>
+                            </ng-container>
+                        </select>
+                    </ng-container>
+                    <ng-container *ngIf="parameter.value && parameter.options">
+                        <input type="text" style="color: red" class="pure-input-1" value="ERROR: either value or options can be filled, not both">
+                    </ng-container>
+                </ng-container>
+            </fieldset>
+        </form>
+    </div>
+    <div footer>
+        <button type="submit" class="pure-button" (click)="buildJob(jobToBuild.job, jobToBuild.parameters)" style="margin-right: 10px;">Run</button>
+        <button type="submit" class="pure-button normal" (click)="jobToBuild = undefined">Cancel</button>
+    </div>
+</app-modal>

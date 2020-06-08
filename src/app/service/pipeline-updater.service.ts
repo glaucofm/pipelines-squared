@@ -40,9 +40,8 @@ export class PipelineUpdaterService {
             for (let pipeline of this.builder.pipelines) {
                 if (pipeline.jobs) {
                     for (let job of pipeline.jobs.filter(x => x.updateFrequency == frequency || (!x.updateFrequency && frequency == UpdateFrequency.Low))) {
-                        console.log(job.name, job.updateFrequency, job.updateFreqStepTime);
+                        console.log(job.name + (job.updateFrequency == 1? ' HF' : ''));
                         await this.updateJob(pipeline, job);
-                        this.applyJobState(pipeline, job);
                         if (job.updateFreqStepTime && job.updateFreqStepTime < Date.now()) {
                             job.updateFrequency = UpdateFrequency.Low;
                             job.updateFreqStepTime = undefined;
@@ -65,8 +64,11 @@ export class PipelineUpdaterService {
     }
 
     async updateJob(pipeline: Pipeline, job: Job) {
-        if (!job.jobRuns || job.jobRuns.length == 0) {
+        if (job.isDeploy) {
+            return;
+        } else if (!job.jobRuns || job.jobRuns.length == 0) {
             await this.updateJobFull(pipeline, job);
+            this.applyJobState(pipeline, job);
         } else {
             let jobState = await this.jenkinsService.getJobState(job);
             if (jobState.lastBuild.number > Number(job.jobRuns[0].id)) {
@@ -74,6 +76,7 @@ export class PipelineUpdaterService {
             } else if (jobState.lastBuild.number != jobState.lastCompletedBuild.number || job.jobRuns[0].status == JobStatus.InProgress) {
                 await this.updateJobPartially(pipeline, job, jobState.lastBuild.number);
             }
+            this.applyJobState(pipeline, job);
         }
     }
 

@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {ApplicationEvent, EventType, Job, JobRun, JobStatus, Pipeline, Stage} from "../model/types";
+import {ApplicationEvent, EventType, Job, JobParameter, JobRun, JobStatus, Pipeline, Stage} from "../model/types";
 import {ConfigurationService} from "../service/configuration.service";
 import {EventService} from "../service/event.service";
 import * as moment from "moment";
@@ -20,6 +20,11 @@ export class PipelinesBoardComponent {
     openStages: { [key: string]: { [key: string]: { [key: string]: {} } } } = {};
     selectedJobRun: { [key: string]: number } = {};
     log: Log;
+
+    public jobToBuild: {
+        job: Job;
+        parameters: JobParameter[];
+    };
 
     constructor(public config: ConfigurationService,
                 public builder: PipelineBuilderService,
@@ -129,9 +134,19 @@ export class PipelinesBoardComponent {
         return job.status != JobStatus.InProgress && job.status != JobStatus.PausedPendingInput;
     }
 
-    async buildJob(job: Job) {
-        job.isWaitingBuild = true;
-        await this.jenkins.runJob(job);
+    async buildJob(job: Job, parameters: JobParameter[] = null) {
+        console.log('1--->', job);
+        console.log('2--->', parameters);
+        if (!parameters && job.parameters) {
+            this.jobToBuild = {
+                job: job,
+                parameters: JSON.parse(JSON.stringify(job.parameters))
+            };
+        } else {
+            this.jobToBuild = undefined;
+            job.isWaitingBuild = true;
+            await this.jenkins.runJob(job);
+        }
     }
 
     canStop(job: Job) {

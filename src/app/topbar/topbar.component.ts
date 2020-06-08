@@ -1,6 +1,6 @@
 import {Component} from '@angular/core';
 import {ConfigurationService} from "../service/configuration.service";
-import {Jenkins, Pipeline, PipelineDefinition} from "../model/types";
+import {Jenkins, Job, JobDefinition, JobParameter, Pipeline, PipelineDefinition} from "../model/types";
 import {PipelineBuilderService} from "../service/pipeline-builder.service";
 import {pipe} from "rxjs";
 
@@ -25,7 +25,7 @@ export class TopbarComponent {
             type: 'array',
             items: {
                 type: 'object',
-                required: [ 'name', 'url', 'next' ],
+                required: [ 'name', 'url' ],
                 properties: {
                     name: { type: 'string' },
                     url:  { type: 'string' },
@@ -33,24 +33,61 @@ export class TopbarComponent {
                         type: 'array',
                         items: { type: 'string' }
                     },
+                    isDeploy: { type: 'boolean' },
+                    parameters: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            required: [ 'name' ],
+                            properties: {
+                                name: { type: 'string' },
+                                fixedValue: { type: 'boolean' },
+                                value: { type: 'string' },
+                                options: {
+                                    type: 'array',
+                                    items: {
+                                        type: 'string',
+                                    }
+                                },
+                            }
+                        }
+                    },
                 }
             }
         }
     };
 
-    samplePipeline = [
+    samplePipeline: JobDefinition[] = [
         {
             name: 'my-job-A',
-            url: 'http://my-jenkins-server.my-company.com:8080/job/my-job-A',
+            url: 'http://my-jenkins-server.my-company.com:8080/job/my-job-A-v21-1-1',
             next: [ 'my-job-B' ]
         },
         {
             name: 'my-job-B',
-            url: 'http://my-jenkins-server.my-company.com:8080/job/my-job-B',
+            url: 'http://my-jenkins-server.my-company.com:8080/job/my-job-B-v21-1-1',
+            next: [ 'my-job-C' ]
+        },
+        {
+            name: 'my-job-C',
+            url: 'http://my-jenkins-server.my-company.com:8080/job/my-job-C-v21-1-1',
+            isDeploy: true,
+            parameters: [
+                {
+                    name: 'my-parameter-1',
+                    fixedValue: true,
+                    value: 'some-fixed-value'
+                },
+                {
+                    name: 'my-parameter-2',
+                    options: [ 'my-option-1' , 'my-option-2' ]
+                }
+            ]
         },
     ];
 
-    constructor(public config: ConfigurationService) {
+    constructor(public config: ConfigurationService,
+                public builder: PipelineBuilderService) {
     }
 
     newJenkins() {
@@ -91,7 +128,29 @@ export class TopbarComponent {
         };
     }
 
-    savePipeline() {
+    savePipeline(editingPipeline: EditingPipeline) {
+        // TODO: error handling
+        let pipeline: PipelineDefinition = {
+            id: editingPipeline.id,
+            name: editingPipeline.name,
+            jobs: JSON.parse(editingPipeline.editorModel.value)
+        };
+        let existingPipelineIndex = this.config.pipelines.findIndex(x => x.id == pipeline.id);
+        if (existingPipelineIndex < 0) {
+            this.config.pipelines.push(pipeline);
+        } else {
+            this.config.pipelines.splice(existingPipelineIndex, 1, pipeline);
+        }
+        this.config.save();
+        this.editingPipeline = undefined;
+        this.builder.buildPipelines();
+    }
+
+    deletePipeline(editingPipeline: EditingPipeline) {
+        this.config.pipelines = this.config.pipelines.filter(x => x.id != editingPipeline.id);
+        this.config.save();
+        this.editingPipeline = undefined;
+        this.builder.buildPipelines();
     }
 
     pipelineEdited(event) {
