@@ -33,6 +33,8 @@
     "jquery": "^3.5.1",
     "moment": "^2.26.0",
     "ngx-moment": "^3.5.0",
+    "ngx-monaco-editor": "^9.0.0",
+    "node-fetch": "^2.6.0",
     "purecss": "^1.0.1",
     "rxjs": "~6.5.5",
     "tslib": "^1.10.0",

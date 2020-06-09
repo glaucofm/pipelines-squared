@@ -1,21 +1,26 @@
-import {JenkinsJobRun, Job, JobRun, JobStatus, NodeLog, Stage} from "../model/types";
+import {ElectronResponse, JenkinsJobRun, Job, JobRun, JobStatus, NodeLog, Stage} from "../model/types";
 import {Injectable} from "@angular/core";
 import {ConfigurationService} from "./configuration.service";
+import {IpcService} from "./ipc.service";
 
 @Injectable()
 export class JenkinsService {
 
-    private useMock = true;
+    private useMock = false;
     private mockIndex = 1;
+    private useElectron = true;
 
-    constructor(private config: ConfigurationService) {
-        setInterval(() => {
-            this.mockIndex += this.mockIndex < 0? 1 : 10;
-            if (this.mockIndex > 1450) {
-                this.mockIndex = 1;
-            }
-            console.log(Math.trunc(this.mockIndex/10 + 1));
-        }, 2000);
+    constructor(private config: ConfigurationService,
+                private ipcService: IpcService) {
+        if (this.useMock) {
+            setInterval(() => {
+                this.mockIndex += this.mockIndex < 0? 1 : 10;
+                if (this.mockIndex > 1450) {
+                    this.mockIndex = 1;
+                }
+                console.log(Math.trunc(this.mockIndex/10 + 1));
+            }, 2000);
+        }
     }
 
     public async getJobState(job: Job): Promise<JenkinsJobRun> {
@@ -46,18 +51,9 @@ export class JenkinsService {
         return await this.doPost(job.url + '/' + build + '/stop');
     }
 
-    public async getJobLog(job: Job, build: number, start: number): Promise<{ total: number, text: string }> {
-        let response: any = await this.getRaw(job.url + '/' + build + '/logText/progressiveText', { start });
-        let text = await response.text();
-        let contentLength = (response.headers? Number(response.headers.get('Content-Length')) : 0);
-        if (this.useMock) {
-            text = text.substr(start, start + 100);
-            contentLength = 100;
-        }
-        return {
-            total: start + contentLength,
-            text: text
-        }
+    public async getJobLog(job: Job, build: number): Promise<string> {
+        let response: ElectronResponse = await this.getRaw(job.url + '/' + build + '/logText/progressiveText');
+        return response.text;
     }
 
     public async getNodeLog(job: Job, build: number, node: number): Promise<NodeLog> {
@@ -65,35 +61,38 @@ export class JenkinsService {
     }
 
     private async getJson(url: string, params: { [key:string]: any } = null): Promise<any> {
-        // console.log(url + this.getParameters(params));
         if (this.useMock) {
             url = url.replace(/^.*\/job\//g, '');
             return (await fetch("http://localhost:8000/" + Math.trunc(this.mockIndex/10 + 1) + "/" + url.replace(/\//g, '_') + ".json")).json();
         }
         let headers = this.getStandardHeaders(url);
-        return (await fetch(url + this.getParameters(params), { headers: headers })).json();
+        if (this.useElectron) {
+            let response = await this.ipcService.request({ method: 'GET', url, params, headers });
+            return JSON.parse(response.text);
+        } else {
+            return (await fetch(url + this.getParameters(params), { headers: headers })).json();
+        }
     }
 
-    private async getRaw(url: string, params: { [key:string]: any } = null): Promise<Response> {
-        // console.log(url + this.getParameters(params));
+    private async getRaw(url: string, params: { [key:string]: any } = null): Promise<ElectronResponse> {
         if (this.useMock) {
-            return await fetch('http://localhost:8000/1/wfnpiorm-wfn-pi-gl-model-jar-23.0.0.0_wfapi_runs.json');
+            return {
+                id: undefined,
+                text: await (await fetch('http://localhost:8000/1/wfnpiorm-wfn-pi-gl-model-jar-23.0.0.0_wfapi_runs.json')).text(),
+                headers: undefined
+            }
         }
         let headers = this.getStandardHeaders(url);
-        return await fetch(url + this.getParameters(params), { headers: headers });
+        return await this.ipcService.request({ method: 'GET', url, params, headers });
     }
 
-    private async doPost(url: string, params: { [key:string]: any } = null, data: {} = null): Promise<Response> {
-        // console.log(url + this.getParameters(params));
+    private async doPost(url: string, params: { [key:string]: any } = null, data: {} = null): Promise<ElectronResponse> {
         if (this.useMock) {
-            return await fetch('http://localhost:8000/1/wfnpiorm-wfn-pi-gl-model-jar-23.0.0.0_wfapi_runs.json');
+            console.log('POST', url, params, data);
+            return;
         }
         let headers = this.getStandardHeaders(url);
-        return await fetch(url + this.getParameters(params), {
-            method: 'POST',
-            body: data? JSON.stringify(data) : null,
-            headers: headers
-        });
+        return await this.ipcService.request({ method: 'POST', url, params, headers, postData: data });
     }
 
     private getParameters(params: { [key:string]: any }) {

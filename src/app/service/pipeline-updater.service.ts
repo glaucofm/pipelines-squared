@@ -10,7 +10,7 @@ import {PipelineBuilderService} from "./pipeline-builder.service";
 export class PipelineUpdaterService {
 
     private isUpdating: { [key: number]: boolean } = {};
-    private intervals = { hf: 0, lf: 0 };
+    private intervals = { hf: undefined, lf: undefined };
 
     constructor(private builder: PipelineBuilderService,
                 private jenkinsService: JenkinsService) {
@@ -123,18 +123,20 @@ export class PipelineUpdaterService {
             let newStatus = job.jobRuns[0].status;
             if (job.status == JobStatus.InProgress && newStatus == JobStatus.Success) {
                 for (let nextJob of job.next) {
-                    nextJob.updateFrequency = UpdateFrequency.High;
-                    nextJob.updateFreqStepTime = Date.now() + 60000;
-                    console.log(nextJob.name, '----> HF', nextJob.updateFreqStepTime);
+                    this.setHighFrequency(nextJob, 60);
                 }
             }
             if (newStatus == JobStatus.InProgress) {
-                job.updateFrequency = UpdateFrequency.High;
-                job.updateFreqStepTime = Date.now() + 10000;
-                console.log(job.name, '----> HF', 'in progress');
+                this.setHighFrequency(job, 10);
             }
             job.status = newStatus;
         }
+    }
+
+    public setHighFrequency(job: Job, seconds: number) {
+        job.updateFrequency = UpdateFrequency.High;
+        job.updateFreqStepTime = Date.now() + seconds * 1000;
+        console.log(job.name, '----> HF +' + seconds);
     }
 
     applyJobRun(job: Job, jobRun: JobRun) {

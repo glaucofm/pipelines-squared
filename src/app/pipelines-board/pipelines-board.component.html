@@ -79,7 +79,7 @@
                                         <i class="fas fa-chevron-left clickable" (click)="this.selectedJobRun[pipeline.id + job.name] = this.selectedJobRun[pipeline.id + job.name] + 1"></i>
                                     </ng-container>
                                     Build {{ jobRun.id }}
-                                    <img src="/assets/images/papyrus-18.png" class="clickable" style="margin-bottom: -2px" (click)="viewLog(job, jobRun)">
+                                    <img src="./assets/images/papyrus-18.png" class="clickable" style="margin-bottom: -2px" (click)="viewLog(job, jobRun)">
                                     <ng-container *ngIf="this.selectedJobRun[pipeline.id + job.name] > 0">
                                         <i class="fas fa-chevron-right clickable" (click)="this.selectedJobRun[pipeline.id + job.name] = this.selectedJobRun[pipeline.id + job.name] - 1"></i>
                                     </ng-container>
@@ -124,7 +124,7 @@
                                         </td>
                                         <td>
                                             <div class="node-name" style="float: left">{{ getNodeText(node) }}</div>
-                                            <img src="/assets/images/papyrus-18.png" class="clickable" style="margin: 2px 0px 0px 4px" (click)="viewLog(job, jobRun, node)">
+                                            <img src="./assets/images/papyrus-18.png" class="clickable" style="margin: 2px 0px 0px 4px" (click)="viewLog(job, jobRun, node)">
                                         </td>
                                     </tr>
                                     <ng-container *ngIf="lastNode">
@@ -150,7 +150,7 @@
         {{ log.name }}
     </div>
     <div body>
-        <pre id="prelog" class="log" [style.height]="(getWindowHeight() - 90) + 'px'">{{ log.text }}</pre>
+        <div id="prelog" class="log" [style.height]="(getWindowHeight() - 90) + 'px'"></div>
     </div>
 </app-modal>
 

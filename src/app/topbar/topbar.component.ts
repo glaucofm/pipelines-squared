@@ -119,12 +119,14 @@ export class TopbarComponent {
         this.editingPipeline = {
             id: pipeline ? pipeline.id : String(Math.random() * 1000000000),
             name: pipeline ? pipeline.name : '',
-            editorModel: {
-                language: 'json',
-                uri: 'main.json',
-                value: JSON.stringify(pipeline ? pipeline.jobs : this.samplePipeline, null, 2),
-                schemas: [ this.pipelineSchema ]
-            }
+            jobsText: JSON.stringify(pipeline ? pipeline.jobs : this.samplePipeline, null, 2),
+            editorModel: undefined
+            // editorModel: {
+            //     language: 'json',
+            //     uri: 'main.json',
+            //     value: JSON.stringify(pipeline ? pipeline.jobs : this.samplePipeline, null, 2),
+            //     schemas: [ this.pipelineSchema ]
+            // }
         };
     }
 
@@ -133,7 +135,8 @@ export class TopbarComponent {
         let pipeline: PipelineDefinition = {
             id: editingPipeline.id,
             name: editingPipeline.name,
-            jobs: JSON.parse(editingPipeline.editorModel.value)
+            jobs: JSON.parse(editingPipeline.jobsText)
+            // jobs: JSON.parse(editingPipeline.editorModel.value)
         };
         let existingPipelineIndex = this.config.pipelines.findIndex(x => x.id == pipeline.id);
         if (existingPipelineIndex < 0) {
@@ -162,6 +165,7 @@ export class TopbarComponent {
 interface EditingPipeline {
     id: string;
     name: string;
+    jobsText: string,
     editorModel: EditorModel;
 }
 

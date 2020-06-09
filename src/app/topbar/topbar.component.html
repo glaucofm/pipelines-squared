@@ -105,15 +105,7 @@
                 <label>Name</label>
                 <input type="text" class="pure-input-1" [(ngModel)]="editingPipeline.name" [ngModelOptions]="{standalone: true}">
                 <label>Configuration</label>
-                <div class="editor" style="border: 1px solid #CCC">
-                    <ngs-code-editor
-                        style="height: 500px"
-                        theme="vs"
-                        [options]="{ lineNumbers: false, fontSize: 14, formatOnType: true, folding: false }"
-                        [codeModel]="editingPipeline.editorModel"
-                        (valueChanged)="pipelineEdited($event)">
-                    </ngs-code-editor>
-                </div>
+                <textarea rows="30" class="pure-input-1" [(ngModel)]="editingPipeline.jobsText" [ngModelOptions]="{standalone: true}"></textarea>
             </fieldset>
         </form>
     </div>

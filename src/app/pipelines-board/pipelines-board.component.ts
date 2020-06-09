@@ -135,9 +135,8 @@ export class PipelinesBoardComponent {
     }
 
     async buildJob(job: Job, parameters: JobParameter[] = null) {
-        console.log('1--->', job);
-        console.log('2--->', parameters);
         if (!parameters && job.parameters) {
+            console.log('1--->', job, parameters)
             this.jobToBuild = {
                 job: job,
                 parameters: JSON.parse(JSON.stringify(job.parameters))
@@ -146,6 +145,7 @@ export class PipelinesBoardComponent {
             this.jobToBuild = undefined;
             job.isWaitingBuild = true;
             await this.jenkins.runJob(job);
+            this.updater.setHighFrequency(job, 60);
         }
     }
 
@@ -163,42 +163,41 @@ export class PipelinesBoardComponent {
             name: job.name + ' ' + jobRun.name + (node? ' ' + node.name : ''),
             build: Number(jobRun.id),
             text: 'Loading...',
-            start: 0
         };
-        this.updateLogView(job, jobRun, node);
-        let interval = setInterval(async () => {
-            if (!this.log) {
-                clearInterval(interval);
-            } else {
-                this.updateLogView(job, jobRun, node);
-            }
-        }, node? 2000 : 1000);
+        setTimeout(() => {
+            this.updateLogView(job, jobRun, node);
+        }, 100);
     }
 
     async updateLogView(job: Job, jobRun: JobRun, node: Stage) {
+        if (!this.log) {
+            return;
+        }
         let doScroll = false;
-        let prelog = document.getElementById("prelog");
+        let logDiv = document.getElementById("prelog");
+        if (logDiv.innerText == '') {
+            logDiv.innerText = 'Loading...';
+        }
         if (node) {
             let nodeLog = await this.jenkins.getNodeLog(job, this.log.build, Number(node.id));
-            if (this.log.text == 'Loading...') {
-                this.log.text = '';
-            }
-            doScroll = prelog.scrollTop + prelog.clientHeight == prelog.scrollHeight;
-            this.log.text += nodeLog.text;
+            doScroll = logDiv.scrollTop + logDiv.clientHeight == logDiv.scrollHeight;
+            logDiv.innerText = nodeLog.text
         } else {
-            let logResp = await this.jenkins.getJobLog(job, this.log.build, this.log.start);
-            if (this.log.text == 'Loading...') {
-                this.log.text = '';
+            let logText = await this.jenkins.getJobLog(job, this.log.build);
+            if (logDiv.innerText == 'Loading...') {
+                logDiv.innerText = '';
             }
-            doScroll = prelog.scrollTop + prelog.clientHeight == prelog.scrollHeight;
-            this.log.text += logResp.text;
-            this.log.start = logResp.total;
+            if (logText.length > logDiv.innerText.length) {
+                doScroll = logDiv.scrollTop + logDiv.clientHeight == logDiv.scrollHeight;
+                logDiv.innerText = logText
+            }
         }
         setTimeout(() => {
             if (doScroll) {
-                prelog.scrollTop = prelog.scrollHeight;
+                logDiv.scrollTop = logDiv.scrollHeight;
             }
         }, 100);
+        setTimeout(() => this.updateLogView(job, jobRun, node), 5000);
     }
 
     getWindowHeight() {
@@ -210,5 +209,4 @@ interface Log {
     name: string;
     build: number;
     text: string;
-    start: number;
 }

@@ -148,3 +148,18 @@ export interface NodeLog {
     text: string;
     consoleUrl: string;
 }
+
+export interface ElectronRequest {
+    id?: string;
+    method: 'GET' | 'POST';
+    url: string;
+    params?: { [key: string]: string };
+    headers: { [key: string]: string };
+    postData?: any;
+}
+
+export interface ElectronResponse {
+    id: string;
+    text: string;
+    headers: Headers;
+}

@@ -1,5 +1,6 @@
 const { app, ipcMain, BrowserWindow } = require('electron');
-let fs = require('fs');
+const fs = require('fs');
+const fetch = require('node-fetch');
 
 let window;
 
@@ -13,13 +14,14 @@ function createWindow () {
         autoHideMenuBar: true,
         title: 'Kafka Viewer',
         webPreferences: {
-            webSecurity: false
+            webSecurity: false,
+            nodeIntegration: true
         }
     });
 
     window.loadURL(`file://${__dirname}/../../dist/angular/index.html`);
 
-    // win.webContents.openDevTools();
+    window.webContents.openDevTools();
 
     window.maximize();
 
@@ -42,14 +44,54 @@ app.on('activate', function () {
     }
 });
 
-ipcMain.on("job-runs", async (event, data) => {
-    let folder = 'C:\\Users\\glauco_martins\\Downloads\\mocks\\4\\';
-    let filename = data.job.url.replace(/.*\/job\//, '') + '.json';
-    console.log(filename);
-    let response = {
-        pipelineId: data.pipelineId,
-        jobName: data.job.name,
-        jobRuns: fs.readFileSync(folder + filename, 'utf8')
-    };
-    window.webContents.send('get-file-response', response);
+/*
+export interface ElectronRequest {
+    id: string;
+    method: 'GET' | 'POST';
+    url: string;
+    params?: { [key: string]: string };
+    headers: { [key: string]: string };
+    postData?: any;
+}
+ */
+
+ipcMain.on("jenkins-request", async (event, data) => {
+    if (data.method === 'GET') {
+        window.webContents.send('jenkins-response', await doGet(data.id, data.url, data.params, data.headers));
+    }
+    if (data.method === 'POST') {
+        window.webContents.send('jenkins-response', await doPost(data.id, data.url, data.params, data.headers, data.postData));
+    }
 });
+
+async function doGet(id, url, params, headers) {
+    let response = await fetch(url + getParameters(params), { headers: headers });
+    return {
+        id,
+        text: await response.text(),
+        headers: headersToMap(response.headers)
+    }
+}
+
+async function doPost(id, url, params, headers, postData) {
+    let response = await fetch(url + getParameters(params), {
+        method: 'POST',
+        body: postData? JSON.stringify(postData) : null,
+        headers: headers
+    });
+    return {
+        id,
+        text: await response.text(),
+        headers: headersToMap(response.headers)
+    }
+}
+
+function headersToMap(fetchHeaders) {
+    let headers = {};
+    fetchHeaders.forEach((value, key) => headers[key] = value);
+    return headers;
+}
+
+function getParameters(params) {
+    return params? '?' + Object.getOwnPropertyNames(params).map(x => x + '=' + escape(params[x])).join('&') : '';
+}

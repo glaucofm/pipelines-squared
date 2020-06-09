@@ -285,3 +285,8 @@ table.form td~td {
 .pure-menu-item td {
     text-align: left;
 }
+
+textarea {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 12px;
+}

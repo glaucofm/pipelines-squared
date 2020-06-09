@@ -423,11 +423,12 @@ button.job-action.pending {
     100% { opacity: 1; }
 }
 
-pre.log {
+.log {
     overflow: auto;
-    font-size: 14px;
+    font-size: 12px;
     background-color: black;
-    color: #ffd84d;
+    color: #E0E0E0;
     margin: 0px;
     font-family: Consolas, 'Courier New', monospace;
+    white-space: pre-wrap;
 }

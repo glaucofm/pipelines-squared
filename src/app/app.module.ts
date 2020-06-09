@@ -18,6 +18,8 @@ import {VarDirective} from "./model/ng-var.directive";
 import {PipelineUpdaterService} from "./service/pipeline-updater.service";
 import {PipelineBuilderService} from "./service/pipeline-builder.service";
 import {CodeEditorModule} from "@ngstack/code-editor";
+import {MonacoEditorModule} from "ngx-monaco-editor";
+import {IpcService} from "./service/ipc.service";
 
 @NgModule({
     declarations: [
@@ -37,14 +39,16 @@ import {CodeEditorModule} from "@ngstack/code-editor";
         MatCardModule,
         FormsModule,
         MomentModule,
-        CodeEditorModule.forRoot()
+        CodeEditorModule.forRoot(),
+        MonacoEditorModule.forRoot({baseUrl: "./assets"})
     ],
     providers: [
         ConfigurationService,
         JenkinsService,
         StorageService,
         PipelineUpdaterService,
-        PipelineBuilderService
+        PipelineBuilderService,
+        IpcService
     ],
     bootstrap: [AppComponent]
 })
