@@ -4,6 +4,7 @@ import {ConfigurationService} from "./configuration.service";
 import {Connector, EventType, Job, JobRun, JobStatus, Pipeline, Slice, Stage} from "../model/types";
 import {EventService} from "./event.service";
 import {pipe} from "rxjs";
+import * as moment from "moment";
 
 @Injectable({
     providedIn: 'root'
@@ -21,9 +22,10 @@ export class PipelineBuilderService {
             let pipeline = JSON.parse(JSON.stringify(configPipeline));
             this.buildPipeline(pipeline);
             this.pipelines.push(pipeline);
+            pipeline.isNew = true;
+            pipeline.messages = [ 'Loaded at ' + moment().format('HH:mm:ss') ];
             EventService.emitter.emit({ type: EventType.PipelineBuilt, data: pipeline });
         }
-        console.log('Building pipelines finished');
     }
 
     buildPipeline(pipeline: Pipeline) {

@@ -10,9 +10,6 @@ export class IpcService {
 
     constructor() {
         electron.ipcRenderer.on('jenkins-response', (event, data) => {
-            if (data.method == 'POST') {
-                console.log(data);
-            }
             this.emitter.emit(data);
         });
     }

@@ -43,6 +43,9 @@ export class PipelinesBoardComponent {
             if (event.type === EventType.PipelineBuilt) {
                 this.pipelinesMaxWidth = Math.max(...this.builder.pipelines.map(x => x.width));
             }
+            if (event.type === EventType.OpenLogView) {
+                this.viewLog(event.data.job, event.data.jobRun);
+            }
         });
     }
 
@@ -136,16 +139,27 @@ export class PipelinesBoardComponent {
 
     async buildJob(job: Job, parameters: JobParameter[] = null) {
         if (!parameters && job.parameters) {
-            console.log('1--->', job, parameters)
             this.jobToBuild = {
                 job: job,
                 parameters: JSON.parse(JSON.stringify(job.parameters))
             };
+            this.jobToBuild.parameters.forEach(x => x.options && x.options.length? x.selectedOption = x.options[0] : undefined);
         } else {
-            this.jobToBuild = undefined;
-            job.isWaitingBuild = true;
-            await this.jenkins.runJob(job);
-            this.updater.setHighFrequency(job, 60);
+            if (job.isDeploy) {
+                let parameters = this.jobToBuild.parameters.map(x => { return [x.name, x.value? x.value : x.selectedOption] });
+                this.jenkins.runDeploy(job, parameters);
+                this.jobToBuild = undefined;
+                job.isWaitingBuild = true;
+                job.isDeploying = true;
+                job.actualParameters = {};
+                parameters.forEach(x => job.actualParameters[x[0]] = x[1]);
+                this.updater.setHighFrequency(job, 60);
+            } else {
+                this.jenkins.runJob(job);
+                this.jobToBuild = undefined;
+                job.isWaitingBuild = true;
+                this.updater.setHighFrequency(job, 60);
+            }
         }
     }
 
@@ -165,11 +179,11 @@ export class PipelinesBoardComponent {
             text: 'Loading...',
         };
         setTimeout(() => {
-            this.updateLogView(job, jobRun, node);
+            this.updateLogView(job, node);
         }, 100);
     }
 
-    async updateLogView(job: Job, jobRun: JobRun, node: Stage) {
+    async updateLogView(job: Job, node: Stage) {
         if (!this.log) {
             return;
         }
@@ -197,7 +211,7 @@ export class PipelinesBoardComponent {
                 logDiv.scrollTop = logDiv.scrollHeight;
             }
         }, 100);
-        setTimeout(() => this.updateLogView(job, jobRun, node), 5000);
+        setTimeout(() => this.updateLogView(job, node), 5000);
     }
 
     getWindowHeight() {

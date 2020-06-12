@@ -10,6 +10,7 @@
 .pipeline {
     margin: 0px auto 0px auto;
     background-color: #FFFFFF;
+    position: relative;
 }
 
 .pipeline-title {
@@ -431,4 +432,16 @@ button.job-action.pending {
     margin: 0px;
     font-family: Consolas, 'Courier New', monospace;
     white-space: pre-wrap;
+}
+
+/*
+    messages
+ */
+
+div.messages {
+    position: absolute;
+    color: #D0D0D0;
+    text-align: right;
+    font-size: 13px;
+    padding-right: 10px;
 }

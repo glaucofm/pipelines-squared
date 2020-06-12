@@ -120,23 +120,19 @@ export class TopbarComponent {
             id: pipeline ? pipeline.id : String(Math.random() * 1000000000),
             name: pipeline ? pipeline.name : '',
             jobsText: JSON.stringify(pipeline ? pipeline.jobs : this.samplePipeline, null, 2),
-            editorModel: undefined
-            // editorModel: {
-            //     language: 'json',
-            //     uri: 'main.json',
-            //     value: JSON.stringify(pipeline ? pipeline.jobs : this.samplePipeline, null, 2),
-            //     schemas: [ this.pipelineSchema ]
-            // }
+            error: undefined
         };
     }
 
     savePipeline(editingPipeline: EditingPipeline) {
-        // TODO: error handling
+        editingPipeline.error = this.validatePipeline(editingPipeline);
+        if (editingPipeline.error) {
+            return;
+        }
         let pipeline: PipelineDefinition = {
             id: editingPipeline.id,
             name: editingPipeline.name,
             jobs: JSON.parse(editingPipeline.jobsText)
-            // jobs: JSON.parse(editingPipeline.editorModel.value)
         };
         let existingPipelineIndex = this.config.pipelines.findIndex(x => x.id == pipeline.id);
         if (existingPipelineIndex < 0) {
@@ -147,6 +143,49 @@ export class TopbarComponent {
         this.config.save();
         this.editingPipeline = undefined;
         this.builder.buildPipelines();
+    }
+
+    validatePipeline(editingPipeline: EditingPipeline): string {
+        let jobs: JobDefinition[] = [];
+        try {
+            jobs = JSON.parse(editingPipeline.jobsText);
+        } catch (e) {
+            return e.toString();
+        }
+        if (!editingPipeline.name) {
+            return 'Pipeline name is mandatory';
+        }
+        if (!jobs) {
+            return 'Pipeline has no jobs';
+        }
+        for (let job of jobs) {
+            if (!job.name) {
+                return 'All jobs must have a name';
+            }
+            if (!job.url || !job.url.startsWith('http')) {
+                return 'Job ' + job.name + ' is missing url or it is invalid';
+            }
+            if (!this.config.jenkins.find(x => job.url.startsWith(x.server))) {
+                return 'Job ' + job.name + ' url matches no configured jenkins connection';
+            }
+            if (job.next) {
+                for (let next of job.next) {
+                    if (!jobs.find(x => x.name == next)) {
+                        return 'Job ' + job.name + ' points as next ' + next + ', but that job is missing';
+                    }
+                }
+            }
+            if (job.parameters) {
+                for (let parameter of job.parameters) {
+                    if (!parameter.name) {
+                        return 'Job ' + job.name + ' has a parameter missing name';
+                    }
+                    if (parameter.value && parameter.options) {
+                        return 'Job ' + job.name + ', parameter ' + parameter.name + ' has both "value" and "options" and that is invalid.';
+                    }
+                }
+            }
+        }
     }
 
     deletePipeline(editingPipeline: EditingPipeline) {
@@ -166,12 +205,6 @@ interface EditingPipeline {
     id: string;
     name: string;
     jobsText: string,
-    editorModel: EditorModel;
+    error: string;
 }
 
-interface EditorModel {
-    language: string;
-    uri: string;
-    value: string;
-    schemas: any;
-}

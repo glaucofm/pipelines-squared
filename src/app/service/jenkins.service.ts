@@ -51,6 +51,13 @@ export class JenkinsService {
         return await this.doPost(job.url + '/' + build + '/stop');
     }
 
+    public async runDeploy(job: Job, parameters: string[][]): Promise<any> {
+        let jobState = await this.getJobState(job);
+        job.minJobRun = jobState.builds[0].number;
+        let formdata = 'json={ parameter: [ ' + parameters.map(x => '{name: "' + escape(x[0]) + '", value: "' + escape(x[1]) + '"}').join(', ') + '] }';
+        return await this.doPost(job.url + '/build?' + formdata, null, null);
+    }
+
     public async getJobLog(job: Job, build: number): Promise<string> {
         let response: ElectronResponse = await this.getRaw(job.url + '/' + build + '/logText/progressiveText');
         return response.text;
@@ -61,6 +68,7 @@ export class JenkinsService {
     }
 
     private async getJson(url: string, params: { [key:string]: any } = null): Promise<any> {
+        console.log('GET', url);
         if (this.useMock) {
             url = url.replace(/^.*\/job\//g, '');
             return (await fetch("http://localhost:8000/" + Math.trunc(this.mockIndex/10 + 1) + "/" + url.replace(/\//g, '_') + ".json")).json();
@@ -68,13 +76,14 @@ export class JenkinsService {
         let headers = this.getStandardHeaders(url);
         if (this.useElectron) {
             let response = await this.ipcService.request({ method: 'GET', url, params, headers });
-            return JSON.parse(response.text);
+            return this.parse(response.text, url);
         } else {
             return (await fetch(url + this.getParameters(params), { headers: headers })).json();
         }
     }
 
     private async getRaw(url: string, params: { [key:string]: any } = null): Promise<ElectronResponse> {
+        console.log('GET', url);
         if (this.useMock) {
             return {
                 id: undefined,
@@ -87,6 +96,7 @@ export class JenkinsService {
     }
 
     private async doPost(url: string, params: { [key:string]: any } = null, data: {} = null): Promise<ElectronResponse> {
+        console.log('POST', url);
         if (this.useMock) {
             console.log('POST', url, params, data);
             return;
@@ -106,6 +116,14 @@ export class JenkinsService {
     private getAuthorization(url: string) {
         let config = this.config.jenkins.find(x => url.startsWith(x.server));
         return btoa(config.username + ':' + config.token);
+    }
+
+    private parse(text: string, identification: string): any {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error(identification, text);
+        }
     }
 
 }

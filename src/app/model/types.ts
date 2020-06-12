@@ -1,11 +1,17 @@
 export enum EventType {
     PipelineRefresh = 'pipeline-refresh',
-    PipelineBuilt = 'pipeline-built'
+    PipelineBuilt = 'pipeline-built',
+    OpenLogView = 'open-log-view'
 }
 
 export interface ApplicationEvent {
-    type: EventType.PipelineRefresh | EventType.PipelineBuilt,
+    type: EventType,
     data?: any
+}
+
+export interface ApplicationEventData {
+    job: Job;
+    jobRun: JobRun;
 }
 
 export interface PipelineDefinition {
@@ -22,6 +28,8 @@ export interface Pipeline {
     height?: number;
     slices?: Slice[];
     jobs?: Job[];
+    isNew: boolean;
+    messages: string[];
 }
 
 export interface JobDefinition {
@@ -35,7 +43,7 @@ export interface JobDefinition {
 export interface JobParameter {
     name: string;
     fixedValue?: boolean;
-    value?: string | number;
+    value?: string;
     options?: string[];
     selectedOption?: string;
 }
@@ -69,6 +77,9 @@ export interface Job {
     isWaitingToStop: boolean;
     updateFrequency: UpdateFrequency;
     updateFreqStepTime: number;
+    isDeploying: boolean;
+    minJobRun: number;
+    actualParameters: { [key: string]: string };
 }
 
 export enum UpdateFrequency {
@@ -101,12 +112,12 @@ export enum JobStatus {
 
 export interface JobRun {
     id: string;
-    name: string;
+    name?: string;
     status: JobStatus;
     startTimeMillis: number;
-    endTimeMillis: number;
-    durationMillis: number;
-    stages: Stage[];
+    endTimeMillis?: number;
+    durationMillis?: number;
+    stages?: Stage[];
 }
 
 export interface Stage {
@@ -132,12 +143,25 @@ export interface Jenkins {
 }
 
 export interface JenkinsJobRun {
+    builds: [{
+        number: number;
+    }];
     lastBuild: {
         number: number;
     };
     lastCompletedBuild: {
         number: number;
-    }
+    };
+    actions: [{
+        parameters: JobRunParameter[];
+    }],
+    result: JobStatus;
+    timestamp: number;
+}
+
+export interface JobRunParameter {
+    name: string;
+    value: string;
 }
 
 export interface NodeLog {

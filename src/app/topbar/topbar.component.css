@@ -290,3 +290,9 @@ textarea {
     font-family: Consolas, 'Courier New', monospace;
     font-size: 12px;
 }
+
+div.error {
+    border-color: indianred;
+    color: red;
+    padding: 10px;
+}

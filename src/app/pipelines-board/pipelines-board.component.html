@@ -56,6 +56,9 @@
                         </div>
                     </ng-container>
                 </ng-container>
+                <div class="messages" [style.width]="(pipelinesMaxWidth + 20) + 'px'" [style.top]="(pipeline.height + 35) + 'px'">
+                    {{ pipeline.messages.join('; ') }}
+                </div>
             </div>
         </div>
 
@@ -160,22 +163,26 @@
     </div>
     <div body>
         <form class="pure-form pure-form-stacked" (ngSubmit)="buildJob(jobToBuild.job, jobToBuild.parameters)">
-            <fieldset>
-                <ng-container *ngFor="let parameter of jobToBuild.parameters">
-                    <label>{{ parameter.name }}</label>
-                    <ng-container *ngIf="parameter.value && !parameter.options">
-                        <input type="text" class="pure-input-1" [(ngModel)]="parameter.value" [ngModelOptions]="{standalone: true}" [disabled]="parameter.fixedValue">
-                    </ng-container>
-                    <ng-container *ngIf="!parameter.value && parameter.options">
-                        <select [(ngModel)]="parameter.selectedOption" [ngModelOptions]="{standalone: true}">
-                            <ng-container *ngFor="let option of parameter.options">
-                                <option value="{{ option }}">{{ option }}</option>
-                            </ng-container>
-                        </select>
-                    </ng-container>
-                    <ng-container *ngIf="parameter.value && parameter.options">
-                        <input type="text" style="color: red" class="pure-input-1" value="ERROR: either value or options can be filled, not both">
-                    </ng-container>
+            <fieldset style="padding: 0px">
+                <ng-container *ngFor="let parameter of jobToBuild.parameters; let last = last">
+                    <div [style.margin-bottom]="last? '0px': '10px'">
+                        <label style="margin: 0px;">{{ parameter.name }}</label>
+                        <ng-container *ngIf="parameter.value && !parameter.options">
+                            <input type="text" class="pure-input-1" style="padding: 3px 8px; margin: 0px;"
+                                   [(ngModel)]="parameter.value" [ngModelOptions]="{standalone: true}" [disabled]="parameter.fixedValue">
+                        </ng-container>
+                        <ng-container *ngIf="!parameter.value && parameter.options">
+                            <select class="pure-input-1" style="padding: 3px 6px; height: auto; margin: 0px;"
+                                    [(ngModel)]="parameter.selectedOption" [ngModelOptions]="{standalone: true}">
+                                <ng-container *ngFor="let option of parameter.options">
+                                    <option value="{{ option }}">{{ option }}</option>
+                                </ng-container>
+                            </select>
+                        </ng-container>
+                        <ng-container *ngIf="parameter.value && parameter.options">
+                            <input type="text" style="color: red" class="pure-input-1" value="ERROR: either value or options can be filled, not both">
+                        </ng-container>
+                    </div>
                 </ng-container>
             </fieldset>
         </form>

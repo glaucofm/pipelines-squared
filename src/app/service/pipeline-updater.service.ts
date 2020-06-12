@@ -1,15 +1,27 @@
 import {Injectable} from '@angular/core';
 import {JenkinsService} from "./jenkins.service";
-import {ApplicationEvent, EventType, Job, JobRun, JobStatus, Pipeline, Stage, UpdateFrequency} from "../model/types";
+import {
+    ApplicationEvent,
+    EventType,
+    Job,
+    JobRun,
+    JobRunParameter,
+    JobStatus,
+    Pipeline,
+    Stage,
+    UpdateFrequency
+} from "../model/types";
 import {EventService} from "./event.service";
 import {PipelineBuilderService} from "./pipeline-builder.service";
+import {pipe} from "rxjs";
+import * as moment from "moment";
 
 @Injectable({
     providedIn: 'root'
 })
 export class PipelineUpdaterService {
 
-    private isUpdating: { [key: number]: boolean } = {};
+    private isUpdating: { [key: string]: boolean } = {};
     private intervals = { hf: undefined, lf: undefined };
 
     constructor(private builder: PipelineBuilderService,
@@ -24,40 +36,60 @@ export class PipelineUpdaterService {
                 await this.updatePipelines(UpdateFrequency.Low);
                 await this.updatePipelines(UpdateFrequency.High);
                 clearInterval(this.intervals.hf);
-                this.intervals.hf = setInterval(() => this.updatePipelines(UpdateFrequency.Low), 30000);
+                this.intervals.hf = setInterval(() => this.updatePipelines(UpdateFrequency.Low), 10000);
                 clearInterval(this.intervals.lf);
-                this.intervals.lf = setInterval(() => this.updatePipelines(UpdateFrequency.High), 2500);
+                this.intervals.lf = setInterval(() => this.updatePipelines(UpdateFrequency.High), 1500);
             }
         });
     }
 
     async updatePipelines(frequency: UpdateFrequency) {
-        if (this.isUpdating[frequency]) {
+        await Promise.all(this.builder.pipelines.map(x => this.updatePipeline(x, frequency)));
+    }
+
+    async updatePipeline(pipeline: Pipeline, frequency: UpdateFrequency) {
+        if (this.isUpdating[frequency + pipeline.name]) {
             return;
         }
-        this.isUpdating[frequency] = true;
+        this.isUpdating[frequency + pipeline.name] = true;
+        let jobs = [];
         try {
-            for (let pipeline of this.builder.pipelines) {
-                if (pipeline.jobs) {
-                    for (let job of pipeline.jobs.filter(x => x.updateFrequency == frequency || (!x.updateFrequency && frequency == UpdateFrequency.Low))) {
-                        console.log(job.name + (job.updateFrequency == 1? ' HF' : ''));
-                        await this.updateJob(pipeline, job);
-                        if (job.updateFreqStepTime && job.updateFreqStepTime < Date.now()) {
-                            job.updateFrequency = UpdateFrequency.Low;
-                            job.updateFreqStepTime = undefined;
-                            console.log(job.name, '----> LF');
-                        }
-                    }
+            if (!pipeline.jobs) {
+                return;
+            }
+            jobs = pipeline.jobs.filter(x => x.updateFrequency == frequency || (!x.updateFrequency && frequency == UpdateFrequency.Low));
+            if (jobs.length == 0) {
+                return;
+            }
+            if (pipeline.isNew) {
+                pipeline.isNew = false;
+                await this.updateAllJobFullyAndInParallel(pipeline, jobs);
+            } else {
+                for (let i = 0; i < jobs.length; i++) {
+                    await this.updateJob(pipeline, jobs[i]);
                 }
+            }
+            for (let job of jobs) {
+                this.checkAndStepFrequencyDown(job);
             }
         } catch (e) {
             console.log(e);
         } finally {
-            this.isUpdating[frequency] = false;
+            if (jobs.length > 0) {
+                pipeline.messages[0] = 'Last updated ' + moment().format('HH:mm:ss');
+            }
+            this.isUpdating[frequency + pipeline.name] = false;
         }
     }
 
-    async applyJobState(pipeline: Pipeline, job: Job) {
+    async updateAllJobFullyAndInParallel(pipeline: Pipeline, jobs: Job[]) {
+        await Promise.all(jobs.filter(x => !x.isDeploy).map(job => this.updateJobRuns(job)));
+        for (let job of jobs) {
+            this.applyJobState(pipeline, job);
+        }
+    }
+
+    applyJobState(pipeline: Pipeline, job: Job) {
         this.applyStatusByTime(job);
         this.updateJobDuration(job);
         EventService.emitter.emit({ type: EventType.PipelineRefresh, data: pipeline });
@@ -65,26 +97,23 @@ export class PipelineUpdaterService {
 
     async updateJob(pipeline: Pipeline, job: Job) {
         if (job.isDeploy) {
-            return;
+            if (job.isDeploying || job.status == JobStatus.InProgress) {
+                await this.updateDeployJob(pipeline, job);
+            }
         } else if (!job.jobRuns || job.jobRuns.length == 0) {
-            await this.updateJobFull(pipeline, job);
-            this.applyJobState(pipeline, job);
+            await this.updateJobRuns(job);
         } else {
             let jobState = await this.jenkinsService.getJobState(job);
             if (jobState.lastBuild.number > Number(job.jobRuns[0].id)) {
-                await this.updateJobFull(pipeline, job);
+                await this.updateJobRuns(job);
             } else if (jobState.lastBuild.number != jobState.lastCompletedBuild.number || job.jobRuns[0].status == JobStatus.InProgress) {
-                await this.updateJobPartially(pipeline, job, jobState.lastBuild.number);
+                await this.updateJobPartially(job, jobState.lastBuild.number);
             }
-            this.applyJobState(pipeline, job);
         }
+        this.applyJobState(pipeline, job);
     }
 
-    async updateJobFull(pipeline: Pipeline, job: Job) {
-        await this.updateJobRuns(pipeline, job);
-    }
-
-    async updateJobPartially(pipeline: Pipeline, job: Job, build: number) {
+    async updateJobPartially(job: Job, build: number) {
         let jobRun = await this.jenkinsService.getWfJobRun(job, build);
         let stages = [];
         for (let stage of jobRun.stages) {
@@ -102,7 +131,7 @@ export class PipelineUpdaterService {
         this.applyJobRuns(job, [ jobRun ]);
     }
 
-    public async updateJobRuns(pipeline: Pipeline, job: Job): Promise<JobRun[]> {
+    public async updateJobRuns(job: Job): Promise<JobRun[]> {
         if (!job.url) {
             job.status = JobStatus.NotExecuted;
             return;
@@ -137,6 +166,14 @@ export class PipelineUpdaterService {
         job.updateFrequency = UpdateFrequency.High;
         job.updateFreqStepTime = Date.now() + seconds * 1000;
         console.log(job.name, '----> HF +' + seconds);
+    }
+
+    checkAndStepFrequencyDown(job: Job) {
+        if (job.updateFreqStepTime && job.updateFreqStepTime < Date.now()) {
+            job.updateFrequency = UpdateFrequency.Low;
+            job.updateFreqStepTime = undefined;
+            console.log(job.name, '----> LF');
+        }
     }
 
     applyJobRun(job: Job, jobRun: JobRun) {
@@ -253,6 +290,46 @@ export class PipelineUpdaterService {
         if (job.next) {
             job.next.forEach(next => this.applyStatusByTime(next));
         }
+    }
+
+    async updateDeployJob(pipeline: Pipeline, job: Job) {
+        let jobState = await this.jenkinsService.getJobState(job);
+        let build = job.isDeploying? jobState.builds[0].number : Number(job.jobRuns[0].id);
+        if (build <= job.minJobRun) {
+            return;
+        }
+        let jobRunState = await this.jenkinsService.getJobRunState(job, build);
+        if (job.isDeploying) {
+            if (this.hasSameParameters(job.actualParameters, jobRunState.actions.find(x => !!x.parameters).parameters)) {
+                job.isDeploying = false;
+                let jobRun: JobRun = {
+                    id: String(build),
+                    name: '#' + build,
+                    status: JobStatus.InProgress,
+                    startTimeMillis: jobRunState.timestamp,
+                    stages: []
+                }
+                if (!job.jobRuns) {
+                    job.jobRuns = [];
+                }
+                job.jobRuns.push(jobRun);
+                job.status = JobStatus.InProgress;
+                job.isWaitingBuild = false;
+                EventService.emitter.emit({ type: EventType.OpenLogView, data: { job, jobRun } });
+            }
+        } else if (jobRunState.result) {
+            job.jobRuns[0].status = jobRunState.result;
+            job.status = job.jobRuns[0].status;
+        }
+    }
+
+    private hasSameParameters(askedParameters: { [key: string]: string }, runParameters: JobRunParameter[]) {
+        for (let parameter of runParameters) {
+            if (!askedParameters[parameter.name] || askedParameters[parameter.name] != parameter.value) {
+                return false;
+            }
+        }
+        return true;
     }
 
     increaseDurations() {

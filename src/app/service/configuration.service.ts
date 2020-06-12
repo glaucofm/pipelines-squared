@@ -1,6 +1,6 @@
 import {Injectable} from "@angular/core";
 import {StorageService} from "./storage.service";
-import {Jenkins, JobStatus, Pipeline, PipelineDefinition} from "../model/types";
+import {Jenkins, JobRun, JobStatus, Pipeline, PipelineDefinition} from "../model/types";
 
 @Injectable()
 export class ConfigurationService {

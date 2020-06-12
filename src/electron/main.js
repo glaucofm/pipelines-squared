@@ -12,7 +12,7 @@ function createWindow () {
 
     window = new BrowserWindow({
         autoHideMenuBar: true,
-        title: 'Kafka Viewer',
+        title: 'Pipelines Squared',
         webPreferences: {
             webSecurity: false,
             nodeIntegration: true
@@ -21,13 +21,18 @@ function createWindow () {
 
     window.loadURL(`file://${__dirname}/../../dist/angular/index.html`);
 
-    window.webContents.openDevTools();
+    // window.webContents.openDevTools();
 
     window.maximize();
 
     window.on('closed', function () {
         window = null;
     });
+
+    app.on("window-all-closed", function () {
+        app.quit();
+    });
+
 }
 
 app.on('ready', createWindow);
@@ -74,14 +79,17 @@ async function doGet(id, url, params, headers) {
 }
 
 async function doPost(id, url, params, headers, postData) {
+    console.log('POST', url, postData? (typeof postData == 'string'? postData : JSON.stringify(postData)) : null, headers);
     let response = await fetch(url + getParameters(params), {
         method: 'POST',
-        body: postData? JSON.stringify(postData) : null,
+        body: postData? (typeof postData == 'string'? postData : JSON.stringify(postData)) : null,
         headers: headers
     });
+    let text = await response.text();
+    console.log(response, text);
     return {
         id,
-        text: await response.text(),
+        text: text,
         headers: headersToMap(response.headers)
     }
 }
