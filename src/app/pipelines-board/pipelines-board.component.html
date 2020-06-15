@@ -56,10 +56,19 @@
                         </div>
                     </ng-container>
                 </ng-container>
-                <div class="messages" [style.width]="(pipelinesMaxWidth + 20) + 'px'" [style.top]="(pipeline.height + 35) + 'px'">
-                    {{ pipeline.messages.join('; ') }}
-                </div>
             </div>
+            <div class="messages" [style.width]="(pipelinesMaxWidth + 10) + 'px'" [style.top]="(pipeline.height + 35) + 'px'">
+                {{ pipeline.messages.join('; ') }}
+            </div>
+        </div>
+
+        <div class="pipeline-error" *ngIf="pipeline.error" [style.width]="(pipelinesMaxWidth + 20) + 'px'">
+            <table>
+                <tr>
+                    <td>{{ pipeline.error }}</td>
+                    <td style="width: 1px"><i class="far fa-window-close clickable" style="float: right;" (click)="pipeline.error = undefined"></i></td>
+                </tr>
+            </table>
         </div>
 
         <!-- *** job details *** -->

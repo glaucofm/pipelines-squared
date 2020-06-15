@@ -74,12 +74,11 @@ export class JenkinsService {
             return (await fetch("http://localhost:8000/" + Math.trunc(this.mockIndex/10 + 1) + "/" + url.replace(/\//g, '_') + ".json")).json();
         }
         let headers = this.getStandardHeaders(url);
-        if (this.useElectron) {
-            let response = await this.ipcService.request({ method: 'GET', url, params, headers });
-            return this.parse(response.text, url);
-        } else {
-            return (await fetch(url + this.getParameters(params), { headers: headers })).json();
+        let response = await this.ipcService.request({ method: 'GET', url, params, headers });
+        if (response.error) {
+            throw response.error;
         }
+        return this.parse(response.text, url);
     }
 
     private async getRaw(url: string, params: { [key:string]: any } = null): Promise<ElectronResponse> {
@@ -87,12 +86,17 @@ export class JenkinsService {
         if (this.useMock) {
             return {
                 id: undefined,
+                error: undefined,
                 text: await (await fetch('http://localhost:8000/1/wfnpiorm-wfn-pi-gl-model-jar-23.0.0.0_wfapi_runs.json')).text(),
                 headers: undefined
             }
         }
         let headers = this.getStandardHeaders(url);
-        return await this.ipcService.request({ method: 'GET', url, params, headers });
+        let response = await this.ipcService.request({ method: 'GET', url, params, headers });
+        if (response.error) {
+            // TODO: show error
+        }
+        return response;
     }
 
     private async doPost(url: string, params: { [key:string]: any } = null, data: {} = null): Promise<ElectronResponse> {
@@ -102,7 +106,11 @@ export class JenkinsService {
             return;
         }
         let headers = this.getStandardHeaders(url);
-        return await this.ipcService.request({ method: 'POST', url, params, headers, postData: data });
+        let response = await this.ipcService.request({ method: 'POST', url, params, headers, postData: data });
+        if (response.error) {
+            // TODO: show error
+        }
+        return response;
     }
 
     private getParameters(params: { [key:string]: any }) {

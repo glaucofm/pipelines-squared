@@ -30,6 +30,7 @@ export interface Pipeline {
     jobs?: Job[];
     isNew: boolean;
     messages: string[];
+    error: string;
 }
 
 export interface JobDefinition {
@@ -184,6 +185,7 @@ export interface ElectronRequest {
 
 export interface ElectronResponse {
     id: string;
+    error: string;
     text: string;
     headers: Headers;
 }

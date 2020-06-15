@@ -73,6 +73,7 @@ export class PipelineUpdaterService {
                 this.checkAndStepFrequencyDown(job);
             }
         } catch (e) {
+            pipeline.error = e;
             console.log(e);
         } finally {
             if (jobs.length > 0) {

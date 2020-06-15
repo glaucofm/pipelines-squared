@@ -70,31 +70,43 @@ ipcMain.on("jenkins-request", async (event, data) => {
 });
 
 async function doGet(id, url, params, headers) {
-    let response = await fetch(url + getParameters(params), { headers: headers });
+    let error = undefined;
+    let text = undefined;
+    let response = await fetch(url + getParameters(params), { headers: headers }).catch(e => error = e.message);
+    if (!error) {
+        text = await response.text();
+    }
     return {
         id,
-        text: await response.text(),
+        error,
+        text: text,
         headers: headersToMap(response.headers)
     }
 }
 
 async function doPost(id, url, params, headers, postData) {
+    let error = undefined;
+    let text = undefined;
     console.log('POST', url, postData? (typeof postData == 'string'? postData : JSON.stringify(postData)) : null, headers);
     let response = await fetch(url + getParameters(params), {
         method: 'POST',
         body: postData? (typeof postData == 'string'? postData : JSON.stringify(postData)) : null,
         headers: headers
-    });
-    let text = await response.text();
-    console.log(response, text);
+    }).catch(e => error = e.message);
+    if (!error) {
+        text = await response.text();
+        console.log(response, text);
+    }
     return {
         id,
+        error,
         text: text,
         headers: headersToMap(response.headers)
     }
 }
 
 function headersToMap(fetchHeaders) {
+    if (!fetchHeaders) return undefined;
     let headers = {};
     fetchHeaders.forEach((value, key) => headers[key] = value);
     return headers;
