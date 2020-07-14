@@ -131,6 +131,13 @@ export class JenkinsService {
             return JSON.parse(text);
         } catch (e) {
             console.error(identification, text);
+            if (text.indexOf('<head>') >= 0) {
+                let error1 = text.replace(/<title>(.*)<\/title>/g, '$1');
+                let error2 = text.replace(/<body>(.*)<\/body>/gs, '$1');
+                throw error1 + ': ' + error2;
+            } else {
+                throw e;
+            }
         }
     }
 

@@ -67,7 +67,6 @@
     "files": [
       "dist/angular/**/*",
       "src/electron/main.js",
-      "src/kafka/*",
       "!node_modules",
       "node_modules/kafka-node",
       "node_modules/node-rdkafka",

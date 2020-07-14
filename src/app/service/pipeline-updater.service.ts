@@ -13,7 +13,6 @@ import {
 } from "../model/types";
 import {EventService} from "./event.service";
 import {PipelineBuilderService} from "./pipeline-builder.service";
-import {pipe} from "rxjs";
 import * as moment from "moment";
 
 @Injectable({
@@ -52,7 +51,7 @@ export class PipelineUpdaterService {
             return;
         }
         this.isUpdating[frequency + pipeline.name] = true;
-        let jobs = [];
+        let jobs: Job[] = [];
         try {
             if (!pipeline.jobs) {
                 return;
@@ -72,13 +71,12 @@ export class PipelineUpdaterService {
             for (let job of jobs) {
                 this.checkAndStepFrequencyDown(job);
             }
+            pipeline.error = undefined;
         } catch (e) {
-            pipeline.error = e;
             console.log(e);
+            pipeline.error = e;
+            this.setUnknownStatus(pipeline);
         } finally {
-            if (jobs.length > 0) {
-                pipeline.messages[0] = 'Last updated ' + moment().format('HH:mm:ss');
-            }
             this.isUpdating[frequency + pipeline.name] = false;
         }
     }
@@ -313,7 +311,7 @@ export class PipelineUpdaterService {
                 if (!job.jobRuns) {
                     job.jobRuns = [];
                 }
-                job.jobRuns.push(jobRun);
+                job.jobRuns.unshift(jobRun);
                 job.status = JobStatus.InProgress;
                 job.isWaitingBuild = false;
                 EventService.emitter.emit({ type: EventType.OpenLogView, data: { job, jobRun } });
@@ -358,6 +356,18 @@ export class PipelineUpdaterService {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private setUnknownStatus(pipeline: Pipeline) {
+        for (let job of pipeline.jobs) {
+            job.status = JobStatus.Unknown; job.statusLeft = JobStatus.Unknown; job.statusRight = JobStatus.Unknown;
+            job.text = ''; job.jobRuns = undefined; job.duration = undefined;
+        }
+        for (let slice of pipeline.slices) {
+            for (let connector of slice.connectors) {
+                connector.status = connector.jobRight.status;
             }
         }
     }

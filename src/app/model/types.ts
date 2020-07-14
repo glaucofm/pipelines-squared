@@ -109,6 +109,7 @@ export enum JobStatus {
     PausedPendingInput = 'PAUSED_PENDING_INPUT',
     Success = 'SUCCESS',
     Unstable = 'UNSTABLE',
+    Unknown = 'UNKNOWN'
 }
 
 export interface JobRun {

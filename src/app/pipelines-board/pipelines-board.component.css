@@ -54,6 +54,11 @@
     color: #dd5b50 !important;
 }
 
+.UNKNOWN, .UNKNOWN div, .title.UNKNOWN {
+    border-color: #F2CDCB !important;
+    color: #F2CDCB !important;
+}
+
 .circle.FAILED {
 }
 

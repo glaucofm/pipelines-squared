@@ -57,9 +57,6 @@
                     </ng-container>
                 </ng-container>
             </div>
-            <div class="messages" [style.width]="(pipelinesMaxWidth + 10) + 'px'" [style.top]="(pipeline.height + 35) + 'px'">
-                {{ pipeline.messages.join('; ') }}
-            </div>
         </div>
 
         <div class="pipeline-error" *ngIf="pipeline.error" [style.width]="(pipelinesMaxWidth + 20) + 'px'">
